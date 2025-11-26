@@ -1,10 +1,10 @@
 # xkcd Daily
 
-#### 2025-11-17
+#### 2025-11-25
 
-## EPIRBs
+## Fifteen Years
 
-![EPIRBs](data/2025-11-17/EPIRBs.png)
+![Fifteen Years](data/2025-11-25/Fifteen Years.png)
 
 ---
 
