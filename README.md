@@ -1,10 +1,10 @@
 # xkcd Daily
 
-#### 2025-12-04
+#### 2025-12-05
 
 ## Inverted Catenaries
 
-![Inverted Catenaries](data/2025-12-04/Inverted%20Catenaries.png)
+![Inverted Catenaries](data/2025-12-05/Inverted%20Catenaries.png)
 
 ---
 
