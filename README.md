@@ -1,10 +1,10 @@
 # xkcd Daily
 
-#### 2025-11-25
+#### 2025-12-04
 
-## Fifteen Years
+## Inverted Catenaries
 
-![Fifteen Years](data/2025-11-25/Fifteen Years.png)
+![Inverted Catenaries](data/2025-12-04/Inverted Catenaries.png)
 
 ---
 
