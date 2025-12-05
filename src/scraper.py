@@ -11,6 +11,7 @@ Usage:
 
 import datetime
 import os
+import shutil
 from typing import Optional, Dict
 from bs4 import BeautifulSoup
 import requests
@@ -210,7 +211,7 @@ def get_comic(comic_index: int) -> bool:
     return True
 
 
-def get_current_comic() -> bool:
+def get_current_comic() -> Optional[str]:
     """
     Download the current latest XKCD comic.
 
@@ -218,17 +219,17 @@ def get_current_comic() -> bool:
     then downloads the image and transcript to the current working directory.
 
     Returns:
-        True if successful, False otherwise
+        The sanitized title of the comic if successful, None otherwise
     """
     # Fetch the main XKCD page
     soup = fetch_webpage(XKCD_BASE_URL)
     if soup is None:
-        return False
+        return None
 
     # Extract comic data
     comic_data = extract_comic_data(soup)
     if comic_data is None:
-        return False
+        return None
 
     # Sanitize the title for use as filename
     sanitized_title = sanitize_filename(comic_data['title'])
@@ -236,20 +237,74 @@ def get_current_comic() -> bool:
     # Download the image
     image_data = download_image(comic_data['image_url'])
     if image_data is None:
-        return False
+        return None
 
     # Save the image
     file_extension = get_file_extension(comic_data['image_url'])
     image_path = f"{sanitized_title}.{file_extension}"
     if not save_image(image_data, image_path):
-        return False
+        return None
 
     # Optionally save the transcript (not saved in original code, but available)
     # transcript_path = f"{sanitized_title}_transcript.txt"
     # save_transcript(comic_data['transcript'], transcript_path)
 
     print(f"Successfully downloaded current comic: {comic_data['title']}")
-    return True
+    return sanitized_title
+
+
+def get_most_recent_previous_directory() -> Optional[str]:
+    """
+    Get the most recent previous data directory (not including today).
+
+    Returns:
+        The absolute path to the most recent previous directory, or None if none exists
+    """
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    data_root = os.path.join(project_root, 'data')
+
+    if not os.path.exists(data_root):
+        return None
+
+    # Get today's date for comparison
+    today = datetime.datetime.now().strftime("%Y-%m-%d")
+
+    # Get all subdirectories in data folder
+    subdirs = [d for d in os.listdir(data_root)
+               if os.path.isdir(os.path.join(data_root, d)) and d != today]
+
+    if not subdirs:
+        return None
+
+    # Sort and get the most recent one
+    subdirs.sort(reverse=True)
+    return os.path.join(data_root, subdirs[0])
+
+
+def get_previous_comic_title() -> Optional[str]:
+    """
+    Get the title of the most recent previous comic.
+
+    Returns:
+        The title of the previous comic (without extension), or None if not found
+    """
+    prev_dir = get_most_recent_previous_directory()
+    if prev_dir is None:
+        return None
+
+    # List all files in the previous directory
+    try:
+        files = os.listdir(prev_dir)
+        # Filter for image files (png, jpg, gif, etc.)
+        image_files = [f for f in files if f.endswith(('.png', '.jpg', '.jpeg', '.gif'))]
+        if image_files:
+            # Remove extension to get title
+            title = os.path.splitext(image_files[0])[0]
+            return title
+    except OSError:
+        return None
+
+    return None
 
 
 def setup_daily_directory() -> str:
@@ -279,6 +334,8 @@ def main():
     Main function to run the daily comic scraper.
 
     Sets up the daily directory and downloads the current XKCD comic.
+    If the current comic is the same as the previous day's comic,
+    the download is skipped and the directory is removed.
     """
     # Create and change to today's data directory
     data_dir = setup_daily_directory()
@@ -286,13 +343,29 @@ def main():
 
     print(f"Saving comic to: {data_dir}")
 
-    # Download the current comic
-    success = get_current_comic()
+    # Get the previous comic title for comparison
+    previous_comic_title = get_previous_comic_title()
 
-    if success:
-        print("Comic download completed successfully!")
-    else:
+    # Download the current comic
+    current_comic_title = get_current_comic()
+
+    if current_comic_title is None:
         print("Failed to download comic.")
+        # Clean up the directory if download failed
+        os.chdir(os.path.dirname(data_dir))
+        shutil.rmtree(data_dir)
+        return
+
+    # Check if today's comic is the same as the previous comic
+    if previous_comic_title and current_comic_title == previous_comic_title:
+        print(f"Today's comic '{current_comic_title}' is the same as the previous comic.")
+        print(f"Removing directory: {data_dir}")
+        # Change out of the directory before removing it
+        os.chdir(os.path.dirname(data_dir))
+        shutil.rmtree(data_dir)
+        print("No new comic available today.")
+    else:
+        print("Comic download completed successfully!")
 
 
 if __name__ == "__main__":
