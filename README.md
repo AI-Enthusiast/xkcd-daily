@@ -4,7 +4,7 @@
 
 ## Inverted Catenaries
 
-![Inverted Catenaries](data/2025-12-04/Inverted Catenaries.png)
+![Inverted Catenaries](data/2025-12-04/Inverted%20Catenaries.png)
 
 ---
 
